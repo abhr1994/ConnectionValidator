@@ -1,17 +1,29 @@
 package validator;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class TeradataValidator {
     public static void main(String[] args) throws ClassNotFoundException {
         try {
-            String connurl = "jdbc:teradata://3.81.12.79/DATABASE=dbc,DBS_PORT=1025";
+            if (args.length != 3) {
+                System.out.println("Invalid number of arguments: Must provide 3 arguments in the format: jdbc_url username password");
+                System.exit(0);
+            }
+            String connurl = args[0];
             Class.forName("com.teradata.jdbc.TeraDriver");
             System.out.println("Connecting to " + connurl);
-            Connection con = DriverManager.getConnection (connurl, "dbc", "");
-            System.out.println("Established successful connection");
-            con.close();
+            Connection con = DriverManager.getConnection (connurl, args[1], args[2]);
+            if (con != null) {
+                System.out.println("Established successful connection");
+                DatabaseMetaData dm = con.getMetaData();
+                System.out.println("Driver name: " + dm.getDriverName());
+                System.out.println("Driver version: " + dm.getDriverVersion());
+                System.out.println("Product name: " + dm.getDatabaseProductName());
+                System.out.println("Product version: " + dm.getDatabaseProductVersion());
+                con.close();
+            }
             System.out.println("Disconnected");
         }
         catch (SQLException ex) {
@@ -19,16 +31,17 @@ public class TeradataValidator {
             // the error information.
             // Note that there could be multiple error objects chained
             // together.
+            SQLException throwables = ex;
             System.out.println();
             System.out.println("*** SQLException caught ***");
-            while (ex != null)
+            while (throwables != null)
             {
-                System.out.println(" Error code: " + ex.getErrorCode());
-                System.out.println(" SQL State: " + ex.getSQLState());
-                System.out.println(" Message: " + ex.getMessage());
-                ex.printStackTrace();
+                System.out.println(" Error code: " + throwables.getErrorCode());
+                System.out.println(" SQL State: " + throwables.getSQLState());
+                System.out.println(" Message: " + throwables.getMessage());
+                throwables.printStackTrace();
                 System.out.println();
-                ex = ex.getNextException();
+                throwables = throwables.getNextException();
             }
             throw new IllegalStateException ("Test Connection failed.") ;
         }
