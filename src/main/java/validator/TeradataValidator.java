@@ -3,18 +3,36 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-
+import org.apache.commons.cli.*;
 public class TeradataValidator {
     public static void main(String[] args) throws ClassNotFoundException {
+        Options options = new Options();
+        Option jdbc_url = new Option("jdbc_url","jdbc_url", true, "Pass the Teradata jdbc url to connect");
+        jdbc_url.setRequired(true);
+        options.addOption(jdbc_url);
+        Option username = new Option("username", "username", true, "Pass the Teradata username ");
+        username.setRequired(true);
+        options.addOption(username);
+        Option password = new Option("password","password", true, "Pass the Teradata password");
+        password.setRequired(true);
+        options.addOption(password);
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cmd = null;
         try {
-            if (args.length != 3) {
-                System.out.println("Invalid number of arguments: Must provide 3 arguments in the format: jdbc_url username password");
-                System.exit(0);
-            }
-            String connurl = args[0];
+            cmd = parser.parse(options, args);
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("iwx-connection-validator", options);
+            System.exit(1);
+        }
+        try {
+            String connurl = cmd.getOptionValue("jdbc_url");
+            String user = cmd.getOptionValue("username");
+            String passwd = cmd.getOptionValue("password");
             Class.forName("com.teradata.jdbc.TeraDriver");
             System.out.println("Connecting to " + connurl);
-            Connection con = DriverManager.getConnection (connurl, args[1], args[2]);
+            Connection con = DriverManager.getConnection (connurl, user, passwd);
             if (con != null) {
                 System.out.println("Established successful connection");
                 DatabaseMetaData dm = con.getMetaData();
